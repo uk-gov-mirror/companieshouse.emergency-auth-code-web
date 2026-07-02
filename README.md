@@ -21,10 +21,30 @@ In order to run this Web app locally you will need to install:
 
 ### Configuration
 
-Key                | Description
--------------------|------------------------------------
-`EMERGENCY_AUTH_CODE_WEB_PORT` |The port of the emergency auth code web service
-`HUMAN_LOG`                    |For human readable logs
+Key                            | Description
+-------------------------------|------------------------------------
+`EMERGENCY_AUTH_CODE_WEB_PORT` | The port of the emergency auth code web service
+`HUMAN_LOG`                    | For human readable logs
+`CHS_API_KEY`                  | API key for Companies House API calls
+`CDN_HOST`                     | CDN hostname for static assets
+`CHS_URL`                      | Base URL of the CHS web service
+`PIWIK_URL`                    | URL of the Piwik analytics service
+`PIWIK_SITE_ID`                | Site ID for Piwik analytics
+`CONTACT_US_URL`               | URL for the contact us page
+`DEVELOPER_URL`                | URL for the developer hub
+
+### Testing
+
+```bash
+# Run all tests
+make test
+
+# Run unit tests only
+make test-unit
+
+# Run a single test class
+./mvnw test -Dtest=CompanyConfirmationPageControllerTest
+```
 
 ### Endpoints
 
