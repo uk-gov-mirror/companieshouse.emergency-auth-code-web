@@ -21,7 +21,7 @@
         <spring-boot.version>3.5.15</spring-boot.version>
 
         <!-- CH dependencies -->
-        <ch-boms.version>0.1.10</ch-boms.version>
+        <ch-boms.version>0.1.11</ch-boms.version>
 
         <thymeleaf-layout-dialect.version>3.4.0</thymeleaf-layout-dialect.version>
 
