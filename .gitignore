@@ -13,6 +13,12 @@ bin/
 .idea/
 *.iml
 
+# Copilot generated reports
+.github/copilot-instructions.md
+docs/ai/accessibility/
+docs/ai/reviews/
+docs/ai/security/
+
 # Mac files
 .DS_Store
 ._*
