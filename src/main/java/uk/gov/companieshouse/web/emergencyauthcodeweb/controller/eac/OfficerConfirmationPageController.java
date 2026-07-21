@@ -55,6 +55,9 @@ public class OfficerConfirmationPageController extends BaseController {
                 LOGGER.errorRequest(request, "Emergency Auth Code request has already been sent for this session");
                 return CANNOT_USE_THIS_SERVICE;
             }
+            if (!isRequestOwnedBySignedInUser(eacRequest, request)) {
+                return ERROR_VIEW;
+            }
             EACOfficer eacOfficer = emergencyAuthCodeService.getOfficer(eacRequest.getCompanyNumber(), eacRequest.getOfficerId());
 
             if (!model.containsAttribute(OFFICER_CONFIRMATION_MODEL_ATTR)) {
@@ -93,6 +96,10 @@ public class OfficerConfirmationPageController extends BaseController {
             if (eacRequest.getStatus().equals(SUBMITTED_STATUS)) {
                 LOGGER.errorRequest(request, "Emergency Auth Code request has already been sent for this session");
                 return CANNOT_USE_THIS_SERVICE;
+            }
+
+            if (!isRequestOwnedBySignedInUser(eacRequest, request)) {
+                return ERROR_VIEW;
             }
 
             String companyNumber = eacRequest.getCompanyNumber();

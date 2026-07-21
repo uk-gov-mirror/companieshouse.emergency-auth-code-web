@@ -16,10 +16,12 @@ import uk.gov.companieshouse.web.emergencyauthcodeweb.model.emergencyauthcode.of
 import uk.gov.companieshouse.web.emergencyauthcodeweb.model.emergencyauthcode.request.EACRequest;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.service.emergencyauthcode.EmergencyAuthCodeService;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.service.navigation.NavigatorService;
+import uk.gov.companieshouse.web.emergencyauthcodeweb.session.SessionService;
 
 import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -43,6 +45,7 @@ public class OfficerConfirmationPageControllerTest {
     private static final String EAC_OFFICER_DOB_MONTH_MODEL_ATTR = "eacOfficerDOBMonth";
     private static final String EAC_OFFICER_APPOINTMENT_MODEL_ATTR = "eacOfficerAppointment";
     private static final String CANNOT_USE_THIS_SERVICE = "eac/cannotUseThisService";
+    private static final String SIGNED_IN_USER_ID = "user123";
 
 
     private static final String OFFICER_CONFIRMATION_PARAM = "confirm";
@@ -59,6 +62,9 @@ public class OfficerConfirmationPageControllerTest {
     @Mock
     private NavigatorService navigatorService;
 
+    @Mock
+    private SessionService sessionService;
+
     @InjectMocks
     private OfficerConfirmationPageController controller;
 
@@ -67,6 +73,8 @@ public class OfficerConfirmationPageControllerTest {
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         this.eacRequest = new EACRequest();
         this.eacRequest.setStatus("pending");
+        this.eacRequest.setUserId(SIGNED_IN_USER_ID);
+        lenient().when(sessionService.getSignedInUserId()).thenReturn(SIGNED_IN_USER_ID);
     }
 
     @Test
@@ -177,5 +185,45 @@ public class OfficerConfirmationPageControllerTest {
                 .param(OFFICER_CONFIRMATION_PARAM, "false"))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EAC_OFFICER_CONFIRMATION_VIEW));
+    }
+
+    @Test
+    @DisplayName("Get officer confirmation - returns error when user does not own request")
+    void getRequestUnsuccessful_UserDoesNotOwnRequest() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        eacRequest.setOfficerId(OFFICER_ID);
+        eacRequest.setUserId("differentUser");
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+
+        this.mockMvc.perform(get(EAC_OFFICER_CONFIRMATION_PATH))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR));
+    }
+
+    @Test
+    @DisplayName("Post officer confirmation - returns error when user does not own request")
+    void postRequestUnsuccessful_UserDoesNotOwnRequest() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        eacRequest.setOfficerId(OFFICER_ID);
+        eacRequest.setUserId("differentUser");
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+
+        this.mockMvc.perform(post(EAC_OFFICER_CONFIRMATION_PATH)
+                .param(OFFICER_CONFIRMATION_PARAM, VALID_CONFIRMATION))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR));
+    }
+
+    @Test
+    @DisplayName("Get officer confirmation - returns error when session user ID is null")
+    void getRequestUnsuccessful_NullSessionUserId() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        eacRequest.setOfficerId(OFFICER_ID);
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+        when(sessionService.getSignedInUserId()).thenReturn(null);
+
+        this.mockMvc.perform(get(EAC_OFFICER_CONFIRMATION_PATH))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR));
     }
 }

@@ -51,6 +51,11 @@ public class ListOfOfficersController extends BaseController {
 
         try {
             EACRequest eacRequest = emergencyAuthCodeService.getEACRequest(requestId);
+
+            if (!isRequestOwnedBySignedInUser(eacRequest, request)) {
+                return ERROR_VIEW;
+            }
+
             EACOfficerList eacOfficerList = emergencyAuthCodeService.getListOfOfficers(eacRequest.getCompanyNumber(), page - 1);
             int totalPages = (int) Math.ceil((double) eacOfficerList.getTotalResults() / (double) eacOfficerList.getItemsPerPage());
 
@@ -95,6 +100,9 @@ public class ListOfOfficersController extends BaseController {
             if (eacRequest.getStatus().equals(SUBMITTED_STATUS)) {
                 LOGGER.errorRequest(request, "Emergency Auth Code request has already been sent for this session");
                 return CANNOT_USE_THIS_SERVICE;
+            }
+            if (!isRequestOwnedBySignedInUser(eacRequest, request)) {
+                return ERROR_VIEW;
             }
             companyNumber = eacRequest.getCompanyNumber();
         } catch (ServiceException ex) {
