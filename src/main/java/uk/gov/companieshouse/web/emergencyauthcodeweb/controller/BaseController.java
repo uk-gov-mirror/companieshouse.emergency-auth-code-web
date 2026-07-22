@@ -11,6 +11,8 @@ import uk.gov.companieshouse.web.emergencyauthcodeweb.service.navigation.Navigat
 import uk.gov.companieshouse.web.emergencyauthcodeweb.session.SessionService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class BaseController {
 
@@ -49,8 +51,11 @@ public abstract class BaseController {
         String requestUserId = eacRequest.getUserId();
 
         if (signedInUserId == null || !signedInUserId.equals(requestUserId)) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("signedInUserId", signedInUserId);
+            data.put("requestUserId", requestUserId);
             LOGGER.errorRequest(request,
-                    "Signed-in user does not own this auth code request");
+                    "Signed-in user does not own this auth code request", data);
             return false;
         }
         return true;
