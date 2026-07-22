@@ -15,8 +15,10 @@ import uk.gov.companieshouse.web.emergencyauthcodeweb.model.emergencyauthcode.of
 import uk.gov.companieshouse.web.emergencyauthcodeweb.model.emergencyauthcode.request.EACRequest;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.service.emergencyauthcode.EmergencyAuthCodeService;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.service.navigation.NavigatorService;
+import uk.gov.companieshouse.web.emergencyauthcodeweb.session.SessionService;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,6 +41,7 @@ public class ListOfOfficersControllerTest {
     private static final String TEMPLATE_PAGE_NUMBERS_MODEL = "pageNumbers";
     private static final String TEMPLATE_CURRENT_PAGE_MODEL = "currentPage";
     private static final String CANNOT_USE_THIS_SERVICE = "eac/cannotUseThisService";
+    private static final String SIGNED_IN_USER_ID = "user123";
 
     private MockMvc mockMvc;
     private EACRequest eacRequest;
@@ -50,6 +53,9 @@ public class ListOfOfficersControllerTest {
     @Mock
     private NavigatorService navigatorService;
 
+    @Mock
+    private SessionService sessionService;
+
     @InjectMocks
     private ListOfOfficersController controller;
 
@@ -58,6 +64,8 @@ public class ListOfOfficersControllerTest {
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         this.eacRequest = new EACRequest();
         this.eacRequest.setStatus("pending");
+        this.eacRequest.setUserId(SIGNED_IN_USER_ID);
+        lenient().when(sessionService.getSignedInUserId()).thenReturn(SIGNED_IN_USER_ID);
     }
 
     @Test
@@ -208,6 +216,43 @@ public class ListOfOfficersControllerTest {
                 .param(OFFICER_ID_PARAM, VALID_OFFICER_ID))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(MOCK_CONTROLLER_PATH));
+    }
+
+    @Test
+    @DisplayName("Get list of officers view - returns error when user does not own request")
+    void getRequestUnsuccessful_UserDoesNotOwnRequest() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        eacRequest.setUserId("differentUser");
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+
+        this.mockMvc.perform(get(EAC_LIST_OF_OFFICERS_PATH))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR_VIEW));
+    }
+
+    @Test
+    @DisplayName("Post to confirmation page - returns error when user does not own request")
+    void postRequestUnsuccessful_UserDoesNotOwnRequest() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        eacRequest.setUserId("differentUser");
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+
+        this.mockMvc.perform(post(EAC_LIST_OF_OFFICERS_PATH)
+                .param(OFFICER_ID_PARAM, VALID_OFFICER_ID))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR_VIEW));
+    }
+
+    @Test
+    @DisplayName("Get list of officers view - returns error when session user ID is null")
+    void getRequestUnsuccessful_NullSessionUserId() throws Exception {
+        eacRequest.setCompanyNumber(COMPANY_NUMBER);
+        when(emergencyAuthCodeService.getEACRequest(REQUEST_ID)).thenReturn(eacRequest);
+        when(sessionService.getSignedInUserId()).thenReturn(null);
+
+        this.mockMvc.perform(get(EAC_LIST_OF_OFFICERS_PATH))
+                .andExpect(status().isOk())
+                .andExpect(view().name(ERROR_VIEW));
     }
 
 }

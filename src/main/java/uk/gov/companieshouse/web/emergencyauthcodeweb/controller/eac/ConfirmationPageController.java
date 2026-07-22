@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.annotation.PreviousController;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.controller.BaseController;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.exception.ServiceException;
+import uk.gov.companieshouse.web.emergencyauthcodeweb.model.emergencyauthcode.request.EACRequest;
 import uk.gov.companieshouse.web.emergencyauthcodeweb.service.emergencyauthcode.EmergencyAuthCodeService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,7 +41,13 @@ public class ConfirmationPageController extends BaseController {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("h:mma", Locale.UK);
 
         try {
-            LocalDateTime submittedAt = emergencyAuthCodeService.getEACRequest(requestId).getSubmittedAt();
+            EACRequest eacRequest = emergencyAuthCodeService.getEACRequest(requestId);
+
+            if (!isRequestOwnedBySignedInUser(eacRequest, request)) {
+                return ERROR_VIEW;
+            }
+
+            LocalDateTime submittedAt = eacRequest.getSubmittedAt();
 
             //Declare timezone of submittedAt in Mongo to be GMT
             ZonedDateTime gmt = ZonedDateTime.of(submittedAt, ZoneId.of("GMT"));
